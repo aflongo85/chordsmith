@@ -82,19 +82,6 @@ export async function verifyCode(email: string, token: string): Promise<void> {
   if (error) throw error
 }
 
-/** Sets (or changes) the password of the signed-in user: no email is sent. */
-export async function setPassword(password: string): Promise<void> {
-  const sb = await getClient()
-  const { error } = await sb.auth.updateUser({ password })
-  if (error) throw error
-}
-
-export async function signInWithPassword(email: string, password: string): Promise<void> {
-  const sb = await getClient()
-  const { error } = await sb.auth.signInWithPassword({ email, password })
-  if (error) throw error
-}
-
 export async function signOut(): Promise<void> {
   const sb = await getClient()
   await sb.auth.signOut()

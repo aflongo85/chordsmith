@@ -737,35 +737,12 @@ textarea:focus {
   border-left-color: var(--chromatic);
 }
 
-.sync-row {
-  display: flex;
+.sync-box > div:first-child + .sugg-actions,
+.sync-box:has(> .sugg-actions) {
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 10px;
   justify-content: space-between;
   align-items: center;
-}
-
-.segmented {
-  display: inline-flex;
-  align-self: flex-start;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.segmented button {
-  border: none;
-  background: var(--surface);
-  padding: 7px 12px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  color: var(--muted);
-}
-
-.segmented button.on {
-  background: var(--accent);
-  color: var(--accent-ink);
 }
 
 .full {
