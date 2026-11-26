@@ -18,6 +18,7 @@ interface Props {
   progression: ParsedChord[]
   playingId: string | null
   canUndo: boolean
+  canRedo: boolean
   onKey: (value: string) => void
   onPreview: (c: ParsedChord) => void
   onAdd: (symbol: string) => void
@@ -25,6 +26,7 @@ interface Props {
   onUse: (symbols: string[]) => void
   onPlayProgression: () => void
   onUndo: () => void
+  onRedo: () => void
   onClear: () => void
   onOpen: () => void
 }
@@ -143,6 +145,9 @@ export function ExplorePanel(p: Props) {
             </button>
             <button className="btn small" onClick={p.onUndo} disabled={!p.canUndo}>
               ↶ Annulla
+            </button>
+            <button className="btn small" onClick={p.onRedo} disabled={!p.canRedo}>
+              ↷ Rifai
             </button>
             <button className="btn small" onClick={p.onClear} disabled={!p.progression.length}>
               Svuota

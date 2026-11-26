@@ -154,9 +154,11 @@ export default function App() {
     return () => clearTimeout(t)
   }, [toast])
 
+  const [future, setFuture] = useState<{ progression: string[]; melody: string[] }>({ progression: [], melody: [] })
   const replace = (field: 'progression' | 'melody', value: string, message?: string) => {
     if (st[field] === value) return
     setHistory((h) => ({ ...h, [field]: [...h[field], st[field]] }))
+    setFuture((f) => ({ ...f, [field]: [] }))
     update({ [field]: value })
     if (message) setToast(message)
   }
@@ -164,7 +166,20 @@ export default function App() {
     const prev = history[field][history[field].length - 1]
     if (prev === undefined) return
     setHistory((h) => ({ ...h, [field]: h[field].slice(0, -1) }))
+    setFuture((f) => ({ ...f, [field]: [...f[field], st[field]] }))
     update({ [field]: prev })
+  }
+  const redo = (field: 'progression' | 'melody') => {
+    const next = future[field][future[field].length - 1]
+    if (next === undefined) return
+    setFuture((f) => ({ ...f, [field]: f[field].slice(0, -1) }))
+    setHistory((h) => ({ ...h, [field]: [...h[field], st[field]] }))
+    update({ [field]: next })
+  }
+  /** typing starts a new branch of history: nothing left to redo */
+  const type = (field: 'progression' | 'melody', value: string) => {
+    if (future[field].length) setFuture((f) => ({ ...f, [field]: [] }))
+    update({ [field]: value })
   }
 
   const apply = (s: Suggestion) => {
@@ -279,6 +294,8 @@ export default function App() {
               progression={prog.chords}
               playingId={playingId}
               canUndo={history.progression.length > 0}
+              canRedo={future.progression.length > 0}
+              onRedo={() => redo('progression')}
               onKey={(k) => update({ exploreKey: k })}
               onPreview={(c) => previewChord(c, 0)}
               onAdd={(sym) => replace('progression', `${st.progression.trim()} ${sym}`.trim())}
@@ -314,9 +331,15 @@ export default function App() {
               activeChord={playingId === 'prog' ? activeChord : null}
               playing={playingId === 'prog'}
               canUndo={history.progression.length > 0}
-              onText={(t) => update({ progression: t })}
+              canRedo={future.progression.length > 0}
+              onRedo={() => redo('progression')}
+              onText={(t) => type('progression', t)}
               onKey={(k) => update({ progressionKey: k })}
               onPlay={playProgression}
+              genre={genre}
+              fallbackKey={exploreKeyCtx}
+              onListenSymbol={(sym) => void previewNotes(symbolMidi(sym, instrument, tuning))}
+              onChords={(t) => replace('progression', t)}
               loop={st.loop}
               loopRange={loopRange}
               onLoop={setLoop}
@@ -339,7 +362,9 @@ export default function App() {
               withChords={st.withChords}
               hasChords={prog.chords.length > 0}
               canUndo={history.melody.length > 0}
-              onText={(t) => update({ melody: t })}
+              canRedo={future.melody.length > 0}
+              onRedo={() => redo('melody')}
+              onText={(t) => type('melody', t)}
               onKey={(k) => update({ melodyKey: k })}
               onPlay={playMelody}
               onUndo={() => undo('melody')}
@@ -364,6 +389,7 @@ export default function App() {
               }}
               onLoad={(idea) => {
                 setHistory((h) => ({ progression: [...h.progression, st.progression], melody: [...h.melody, st.melody] }))
+                setFuture({ progression: [], melody: [] })
                 update({ progression: idea.progression, melody: idea.melody, genreId: idea.genreId, tab: 'progressione', progressionKey: 'auto', melodyKey: 'auto' })
               }}
               onDelete={(id) =>

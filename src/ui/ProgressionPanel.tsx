@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import type { ParsedChord } from '../core/chords'
 import { prettyAccidentals as P } from '../core/notes'
+import type { KeyContext } from '../core/key'
 import type { ProgressionAnalysis } from '../core/progression'
+import type { GenreProfile } from '../genres/types'
 import type { Instrument, Tuning } from '../instruments/types'
+import { ChordBoard } from './ChordBoard'
 import { Fretboard } from './Fretboard'
 import { KeySelect } from './KeySelect'
 import { offsetLabel, scaleMarks, soundingChord, soundingKey, voicingMarks, voicingsFor } from './helpers'
@@ -17,14 +20,20 @@ interface Props {
   activeChord: number | null
   playing: boolean
   canUndo: boolean
+  canRedo: boolean
   onText: (t: string) => void
   onKey: (k: string) => void
   onPlay: () => void
+  genre: GenreProfile
+  fallbackKey: KeyContext
+  onListenSymbol: (symbol: string) => void
+  onChords: (text: string) => void
   loop: boolean
   loopRange: { from: number; to: number }
   onLoop: (v: boolean) => void
   onRange: (r: { from: number; to: number }) => void
   onUndo: () => void
+  onRedo: () => void
   onPreview: (c: ParsedChord, voicing: number) => void
 }
 
@@ -114,6 +123,9 @@ export function ProgressionPanel(p: Props) {
             <button className="btn" onClick={p.onUndo} disabled={!p.canUndo}>
               ↶ Annulla
             </button>
+            <button className="btn" onClick={p.onRedo} disabled={!p.canRedo}>
+              ↷ Rifai
+            </button>
             <span className="key-label">
               {a.key.label}
               {p.tuning.offset !== 0 && (
@@ -122,24 +134,24 @@ export function ProgressionPanel(p: Props) {
             </span>
           </div>
 
-          <div className="chord-strip">
-            {a.items.map((item, i) => (
-              <button
-                key={i}
-                className={`chord-chip cat-${item.category.replace(/\s/g, '-')} ${i === sel ? 'selected' : ''} ${p.activeChord === i ? 'active' : ''} ${i < p.loopRange.from || i > p.loopRange.to ? 'out-of-range' : ''}`}
-                onClick={() => pick(i)}
-                title={item.note}
-              >
-                <span className="chord-symbol">{P(item.chord.symbol)}</span>
-                <span className="chord-roman">{P(item.roman)}</span>
-                <span className="chord-func">{item.func}</span>
-                {p.tuning.offset !== 0 && (
-                  <span className="chord-sounding">suona {P(soundingChord(item.chord, a.key, p.tuning.offset))}</span>
-                )}
-              </button>
-            ))}
-          </div>
+        </>
+      )}
 
+      <ChordBoard
+        items={a?.items ?? []}
+        keyCtx={a?.key ?? p.fallbackKey}
+        genre={p.genre}
+        offset={p.tuning.offset}
+        selected={sel}
+        activeChord={p.activeChord}
+        inRange={(i) => i >= p.loopRange.from && i <= p.loopRange.to}
+        onPick={pick}
+        onListen={p.onListenSymbol}
+        onChange={(symbols) => p.onChords(symbols.join(' '))}
+      />
+
+      {a && (
+        <>
           <div className="board-head">
             <div>
               <strong>{chord ? P(chord.symbol) : ''}</strong>

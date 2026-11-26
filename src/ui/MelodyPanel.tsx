@@ -43,10 +43,12 @@ interface Props {
   withChords: boolean
   hasChords: boolean
   canUndo: boolean
+  canRedo: boolean
   onText: (t: string) => void
   onKey: (k: string) => void
   onPlay: () => void
   onUndo: () => void
+  onRedo: () => void
   onWithChords: (v: boolean) => void
   onPick: (midi: number) => void
 }
@@ -107,6 +109,9 @@ export function MelodyPanel(p: Props) {
         </button>
         <button className="btn" onClick={p.onUndo} disabled={!p.canUndo}>
           ↶ Annulla
+        </button>
+        <button className="btn" onClick={p.onRedo} disabled={!p.canRedo}>
+          ↷ Rifai
         </button>
         <label className="check" title={p.hasChords ? '' : 'Scrivi prima una progressione'}>
           <input type="checkbox" checked={p.withChords} disabled={!p.hasChords} onChange={(e) => p.onWithChords(e.target.checked)} /> con gli accordi
