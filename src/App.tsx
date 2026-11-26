@@ -273,7 +273,8 @@ export default function App() {
               }}
               onOpen={() => {
                 stopAll()
-                update({ tab: 'progressione', progressionKey: keyValue(exploreKeyCtx) })
+                // let the analysis find the key: the chords may come from elsewhere
+                update({ tab: 'progressione', progressionKey: 'auto' })
               }}
             />
           )}

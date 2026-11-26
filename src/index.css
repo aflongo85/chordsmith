@@ -384,7 +384,7 @@ textarea:focus {
 
 .chord-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
   gap: 8px;
 }
 
@@ -401,6 +401,7 @@ textarea:focus {
   background: var(--surface);
   cursor: pointer;
   text-align: left;
+  min-width: 0;
   transition: transform 0.08s ease;
 }
 
@@ -438,6 +439,8 @@ textarea:focus {
 }
 
 .chord-sounding {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -448,10 +451,13 @@ textarea:focus {
 }
 
 .chord-func {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 /* ---------------------------------------------------------- fretboard */
