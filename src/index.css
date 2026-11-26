@@ -616,8 +616,19 @@ textarea:focus {
 }
 
 .contour {
-  letter-spacing: 1px;
-  word-break: break-all;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+
+.contour .step {
+  white-space: nowrap;
+}
+
+.contour small {
+  font-size: 0.75em;
+  margin-left: 1px;
+  opacity: 0.8;
 }
 
 .tag {

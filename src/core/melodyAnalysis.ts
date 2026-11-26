@@ -25,7 +25,8 @@ export interface MelodyAnalysis {
   candidates: KeyCandidate[]
   scaleFits: ScaleFit[]
   range: { low: string; high: string; semitones: number }
-  contour: string
+  /** semitone steps between consecutive notes (+ up, - down, 0 repeat) */
+  contour: number[]
   stepwiseRatio: number
   largestLeap: number
   motifs: Motif[]
@@ -109,11 +110,8 @@ export function findMotifs(pitched: number[]): Motif[] {
   return found.slice(0, 4)
 }
 
-function contourOf(pitched: number[]): string {
-  return pitched
-    .slice(1)
-    .map((m, i) => (m > pitched[i] ? '↗' : m < pitched[i] ? '↘' : '→'))
-    .join('')
+function contourOf(pitched: number[]): number[] {
+  return pitched.slice(1).map((m, i) => m - pitched[i])
 }
 
 const CHARACTERISTIC: Partial<Record<ModeId, { interval: number; text: string }>> = {

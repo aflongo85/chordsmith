@@ -156,8 +156,15 @@ export function MelodyPanel(p: Props) {
               </div>
             </div>
             <div>
-              <span className="muted">Profilo</span>
-              <div className="contour">{a.contour}</div>
+              <span className="muted">Profilo (semitoni)</span>
+              <div className="contour" title="Ogni freccia è il passaggio da una nota alla successiva: ↗ sale, ↘ scende, → ripete. Il numero indica di quanti semitoni.">
+                {a.contour.map((d, i) => (
+                  <span key={i} className="step">
+                    {d > 0 ? '↗' : d < 0 ? '↘' : '→'}
+                    {d !== 0 && <small>{Math.abs(d)}</small>}
+                  </span>
+                ))}
+              </div>
             </div>
             {a.motifs[0] && (
               <div>
