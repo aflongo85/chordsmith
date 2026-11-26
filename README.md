@@ -35,3 +35,7 @@ src/ui/           componenti React
 - **Nuovo genere**: crea un `GenreProfile` in `src/genres/` (puoi partire da `genericProfile` con lo spread) e aggiungilo a `GENRES` in `src/genres/index.ts`. Il motore non cambia.
 - **Nuovo strumento**: implementa l'interfaccia `Instrument` (`src/instruments/types.ts`) e registralo in `INSTRUMENTS`. Gli strumenti a corde (ukulele, chitarra a 7 corde…) sono solo una nuova istanza di `StringedInstrument`; per un pianoforte serve un'implementazione `kind: 'keyboard'` e un componente tastiera nella UI.
 - **AI**: `src/suggest/llm.ts` contiene un provider pronto che manda al modello l'analisi strutturata e rivalida ogni accordo e nota restituiti. Per attivarlo serve un piccolo backend che custodisca la chiave API (mai nel browser) e una riga in `src/suggest/index.ts`.
+
+## Crediti
+
+Campioni di chitarra elettrica (`public/samples/guitar-electric/`): [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) di Nicholaus Brosowsky, registrazioni originali di Karoryfer, licenza [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Se i campioni non sono raggiungibili l'app usa un suono di chitarra sintetizzato.

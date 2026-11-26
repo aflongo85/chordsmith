@@ -311,6 +311,17 @@ export default function App() {
           </aside>
         )}
       </main>
+      <footer className="credits muted small">
+        Campioni di chitarra elettrica:{' '}
+        <a href="https://github.com/nbrosowsky/tonejs-instruments" target="_blank" rel="noreferrer">
+          tonejs-instruments
+        </a>{' '}
+        di Nicholaus Brosowsky, registrazioni di Karoryfer, licenza{' '}
+        <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">
+          CC BY 3.0
+        </a>
+        .
+      </footer>
       {toast && (
         <div className="toast" role="status">
           {toast}

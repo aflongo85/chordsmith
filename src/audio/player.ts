@@ -24,6 +24,28 @@ let transpose = 0
 /** One rendered sample every few semitones; the sampler repitches in between. */
 const SAMPLE_NOTES = [40, 45, 50, 55, 59, 64, 69, 74]
 const SAMPLE_SECONDS = 3.2
+/** longest a note can ring (the recorded samples last ~4.3 s) */
+const MAX_HOLD = 4
+
+/**
+ * Recorded clean electric guitar (tonejs-instruments by N. Brosowsky, recordings by
+ * Karoryfer, CC BY 3.0), one sample every minor third; shipped in public/ so it works offline.
+ */
+const RECORDED = ['C#2', 'E2', 'F#2', 'A2', 'C3', 'D#3', 'F#3', 'A3', 'C4', 'D#4', 'F#4', 'A4', 'C5', 'D#5', 'F#5', 'A5', 'C6']
+const SAMPLE_DIR = `${import.meta.env.BASE_URL}samples/guitar-electric/`
+
+function loadRecordedSamples(Tone: ToneLib): Promise<ToneNS.Sampler> {
+  const urls = Object.fromEntries(RECORDED.map((n) => [n, `${n.replace('#', 's')}.mp3`]))
+  return new Promise((resolve, reject) => {
+    const sampler: ToneNS.Sampler = new Tone.Sampler({
+      urls,
+      baseUrl: SAMPLE_DIR,
+      release: 0.5,
+      onload: () => resolve(sampler),
+      onerror: reject,
+    })
+  })
+}
 
 const isTouchDevice = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 
@@ -55,11 +77,18 @@ async function load(): Promise<Engine> {
   const Tone = await import('tone')
   // phones get bigger audio buffers: a little more latency, no dropouts
   Tone.setContext(new Tone.Context({ latencyHint: isTouchDevice() ? 'playback' : 'interactive', lookAhead: 0.15 }))
-  const urls = await renderSamples(Tone)
-  const guitar = new Tone.Sampler({ urls, release: 0.6, volume: -4 })
+  let guitar: ToneNS.Sampler
+  try {
+    guitar = await loadRecordedSamples(Tone)
+    guitar.volume.value = -9
+  } catch {
+    // samples unreachable (first launch while offline): fall back to the synthesized tone
+    guitar = new Tone.Sampler({ urls: await renderSamples(Tone), release: 0.6, volume: -10 })
+  }
   const crunch = new Tone.Distortion({ distortion: 0.5, oversample: 'none' })
-  const room = new Tone.FeedbackDelay({ delayTime: 0.085, feedback: 0.22, wet: 0.14 })
-  const limiter = new Tone.Limiter(-1)
+  const room = new Tone.FeedbackDelay({ delayTime: 0.085, feedback: 0.2, wet: 0.12 })
+  // generous headroom: summed strums must never clip (clipping crackles on phone speakers)
+  const limiter = new Tone.Limiter(-3)
   room.chain(limiter, Tone.getDestination())
   const e: Engine = { Tone, guitar, crunch, room }
   route(e)
@@ -94,7 +123,7 @@ async function ensure(): Promise<Engine> {
 function pluck(e: Engine, midi: number, time: number, seconds: number, velocity = 0.8) {
   // tiny random variation so repeated strums don't sound mechanical
   const v = Math.min(1, Math.max(0.2, velocity + (Math.random() - 0.5) * 0.1))
-  const hold = Math.min(Math.max(seconds, 0.15), SAMPLE_SECONDS)
+  const hold = Math.min(Math.max(seconds, 0.15), MAX_HOLD)
   e.guitar.triggerAttackRelease(e.Tone.Frequency(midi + transpose, 'midi').toNote(), hold, time, v)
 }
 

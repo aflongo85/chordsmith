@@ -720,6 +720,17 @@ textarea:focus {
   min-width: 0;
 }
 
+/* ---------------------------------------------------------- credits */
+
+.credits {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.credits a {
+  color: inherit;
+}
+
 /* ---------------------------------------------------------- toast */
 
 .toast {
