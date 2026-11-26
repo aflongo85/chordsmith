@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { prettyAccidentals as P } from '../core/notes'
 import { getGenre } from '../genres'
 import type { Idea } from '../state/store'
+import type { SyncApi } from '../sync/useIdeaSync'
+import { SyncBox } from './SyncBox'
 
 interface Props {
   ideas: Idea[]
+  sync: SyncApi
   onSave: (name: string) => void
   onLoad: (idea: Idea) => void
   onDelete: (id: string) => void
 }
 
-export function IdeasPanel({ ideas, onSave, onLoad, onDelete }: Props) {
+export function IdeasPanel({ ideas, sync, onSave, onLoad, onDelete }: Props) {
   const [name, setName] = useState('')
   const [confirm, setConfirm] = useState<string | null>(null)
   const save = () => {
@@ -19,6 +22,7 @@ export function IdeasPanel({ ideas, onSave, onLoad, onDelete }: Props) {
   }
   return (
     <div className="panel">
+      <SyncBox sync={sync} />
       <div className="editor-row">
         <label className="field grow">
           <span>Salva progressione e riff correnti</span>
@@ -28,7 +32,9 @@ export function IdeasPanel({ ideas, onSave, onLoad, onDelete }: Props) {
           Salva
         </button>
       </div>
-      <p className="muted small">Le idee restano salvate in questo browser.</p>
+      <p className="muted small">
+        {sync.email ? 'Le idee sono salvate su questo dispositivo e sincronizzate con il tuo account.' : 'Le idee restano salvate in questo browser.'}
+      </p>
       {ideas.length === 0 && <p className="muted">Nessuna idea salvata.</p>}
       <ul className="ideas">
         {[...ideas]

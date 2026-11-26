@@ -720,6 +720,36 @@ textarea:focus {
   min-width: 0;
 }
 
+/* ---------------------------------------------------------- sync */
+
+.sync-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--diatonic);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--bg);
+}
+
+.sync-box.sync-error {
+  border-left-color: var(--chromatic);
+}
+
+.sync-box > div:first-child + .sugg-actions,
+.sync-box:has(> .sugg-actions) {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.full {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 /* ---------------------------------------------------------- credits */
 
 .credits {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export interface Idea {
   id: string
@@ -7,6 +7,10 @@ export interface Idea {
   melody: string
   genreId: string
   createdAt: number
+  /** last change (ms); older saves without it fall back to createdAt */
+  updatedAt?: number
+  /** deletions are kept as tombstones so they can reach the other devices */
+  deleted?: boolean
 }
 
 export type Tab = 'progressione' | 'melodia' | 'idee'
@@ -69,5 +73,7 @@ export function usePersistentState() {
     return () => clearTimeout(t)
   }, [state])
   const update = (patch: Partial<AppState>) => setState((s) => ({ ...s, ...patch }))
-  return [state, update] as const
+  // stable identity: the sync hook depends on it
+  const updateIdeas = useCallback((fn: (ideas: Idea[]) => Idea[]) => setState((s) => ({ ...s, ideas: fn(s.ideas) })), [])
+  return [state, update, updateIdeas] as const
 }

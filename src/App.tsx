@@ -9,6 +9,7 @@ import { INSTRUMENTS, getInstrument, getTuning } from './instruments'
 import { play, previewNotes, setCrunch, setTranspose, stop, warmUp, type PlayOptions } from './audio/player'
 import { collectSuggestions, type Suggestion, type SuggestionContext } from './suggest'
 import { usePersistentState, type Tab } from './state/store'
+import { useIdeaSync } from './sync/useIdeaSync'
 import { chordMidi, parseKeyChoice, symbolMidi, uid, voicingsFor } from './ui/helpers'
 import { ProgressionPanel } from './ui/ProgressionPanel'
 import { MelodyPanel } from './ui/MelodyPanel'
@@ -22,7 +23,8 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 export default function App() {
-  const [st, update] = usePersistentState()
+  const [st, update, updateIdeas] = usePersistentState()
+  const sync = useIdeaSync(st.ideas, updateIdeas)
   const genre = getGenre(st.genreId)
   const instrument = getInstrument(st.instrumentId)
   const tuning = getTuning(instrument, st.tuningId)
@@ -283,18 +285,24 @@ export default function App() {
           )}
           {st.tab === 'idee' && (
             <IdeasPanel
-              ideas={st.ideas}
+              ideas={st.ideas.filter((i) => !i.deleted)}
+              sync={sync}
               onSave={(name) => {
-                update({
-                  ideas: [...st.ideas, { id: uid(), name, progression: st.progression, melody: st.melody, genreId: st.genreId, createdAt: Date.now() }],
-                })
+                const now = Date.now()
+                updateIdeas((ideas) => [
+                  ...ideas,
+                  { id: uid(), name, progression: st.progression, melody: st.melody, genreId: st.genreId, createdAt: now, updatedAt: now },
+                ])
                 setToast('Idea salvata')
               }}
               onLoad={(idea) => {
                 setHistory((h) => ({ progression: [...h.progression, st.progression], melody: [...h.melody, st.melody] }))
                 update({ progression: idea.progression, melody: idea.melody, genreId: idea.genreId, tab: 'progressione', progressionKey: 'auto', melodyKey: 'auto' })
               }}
-              onDelete={(id) => update({ ideas: st.ideas.filter((i) => i.id !== id) })}
+              onDelete={(id) =>
+                // keep a tombstone so the deletion reaches the other devices
+                updateIdeas((ideas) => ideas.map((i) => (i.id === id ? { ...i, deleted: true, updatedAt: Date.now() } : i)))
+              }
             />
           )}
         </section>
