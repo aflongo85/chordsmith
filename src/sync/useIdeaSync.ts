@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Idea } from '../state/store'
 import { syncConfigured } from './config'
-import { fetchIdeas, pushIdeas, sendSignInEmail, signOut, verifyCode, watchSession } from './cloud'
+import { fetchIdeas, pushIdeas, sendSignInEmail, setPassword, signInWithPassword, signOut, verifyCode, watchSession } from './cloud'
 import { ideasSignature, mergeIdeas } from './merge'
 
 export interface SyncState {
@@ -15,14 +15,31 @@ export interface SyncState {
 export interface SyncApi extends SyncState {
   sendEmail: (email: string) => Promise<void>
   verify: (email: string, code: string) => Promise<void>
+  signInWithPassword: (email: string, password: string) => Promise<void>
+  setPassword: (password: string) => Promise<void>
   signOut: () => Promise<void>
   syncNow: () => void
 }
 
-function message(e: unknown): string {
-  if (e instanceof Error) return e.message
-  if (typeof e === 'object' && e && 'message' in e) return String((e as { message: unknown }).message)
-  return String(e)
+const TRANSLATIONS: [RegExp, string][] = [
+  [/rate limit/i, 'Troppe email inviate: Supabase ne permette poche all\'ora. Riprova più tardi oppure accedi con la password.'],
+  [/invalid login credentials/i, 'Email o password errati. La password va prima impostata da un dispositivo già collegato.'],
+  [/password should be at least|weak password/i, 'Password troppo corta o debole: usa almeno 8 caratteri.'],
+  [/same.*password|different from the old/i, 'È uguale alla password attuale.'],
+  [/reauthenticat/i, 'Per sicurezza Supabase chiede un accesso recente: esci, rientra col link via email e riprova.'],
+  [/failed to fetch|network/i, 'Connessione assente o instabile.'],
+  [/permission denied/i, 'Permessi mancanti sul database: esegui le righe "grant" di supabase/schema.sql.'],
+]
+
+/** Supabase errors are in English and technical: show something actionable instead. */
+export function friendlyError(e: unknown): string {
+  const raw =
+    e instanceof Error
+      ? e.message
+      : typeof e === 'object' && e && 'message' in e
+        ? String((e as { message: unknown }).message)
+        : String(e)
+  return TRANSLATIONS.find(([re]) => re.test(raw))?.[1] ?? raw
 }
 
 /**
@@ -64,7 +81,7 @@ export function useIdeaSync(ideas: Idea[], updateIdeas: (fn: (ideas: Idea[]) => 
       syncedSig.current = ideasSignature(merged)
       setState((s) => ({ ...s, status: 'idle', lastSync: Date.now() }))
     } catch (e) {
-      setState((s) => ({ ...s, status: 'error', error: message(e) }))
+      setState((s) => ({ ...s, status: 'error', error: friendlyError(e) }))
     } finally {
       running.current = false
       if (again.current) {
@@ -123,6 +140,12 @@ export function useIdeaSync(ideas: Idea[], updateIdeas: (fn: (ideas: Idea[]) => 
     },
     verify: async (email, code) => {
       await verifyCode(email, code)
+    },
+    signInWithPassword: async (email, password) => {
+      await signInWithPassword(email, password)
+    },
+    setPassword: async (password) => {
+      await setPassword(password)
     },
     signOut: async () => {
       await signOut()
