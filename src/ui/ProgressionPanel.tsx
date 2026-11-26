@@ -20,6 +20,10 @@ interface Props {
   onText: (t: string) => void
   onKey: (k: string) => void
   onPlay: () => void
+  loop: boolean
+  loopRange: { from: number; to: number }
+  onLoop: (v: boolean) => void
+  onRange: (r: { from: number; to: number }) => void
   onUndo: () => void
   onPreview: (c: ParsedChord, voicing: number) => void
 }
@@ -79,6 +83,34 @@ export function ProgressionPanel(p: Props) {
             <button className="btn primary" onClick={p.onPlay}>
               {p.playing ? '■ Stop' : '▶ Suona'}
             </button>
+            <button
+              className={`btn ${p.loop ? 'toggled' : ''}`}
+              aria-pressed={p.loop}
+              onClick={() => p.onLoop(!p.loop)}
+              title={p.loop ? 'Ripete finché non premi Stop' : 'Suona una volta sola'}
+            >
+              🔁 Loop {p.loop ? 'sì' : 'no'}
+            </button>
+            {a.chords.length > 1 && (
+              <span className="loop-range">
+                da
+                <select value={p.loopRange.from} onChange={(e) => p.onRange({ ...p.loopRange, from: Number(e.target.value) })} aria-label="Primo accordo da suonare">
+                  {a.chords.map((c, i) => (
+                    <option key={i} value={i}>
+                      {i + 1}. {P(c.symbol)}
+                    </option>
+                  ))}
+                </select>
+                a
+                <select value={p.loopRange.to} onChange={(e) => p.onRange({ ...p.loopRange, to: Number(e.target.value) })} aria-label="Ultimo accordo da suonare">
+                  {a.chords.map((c, i) => (
+                    <option key={i} value={i}>
+                      {i + 1}. {P(c.symbol)}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            )}
             <button className="btn" onClick={p.onUndo} disabled={!p.canUndo}>
               ↶ Annulla
             </button>
@@ -94,7 +126,7 @@ export function ProgressionPanel(p: Props) {
             {a.items.map((item, i) => (
               <button
                 key={i}
-                className={`chord-chip cat-${item.category.replace(/\s/g, '-')} ${i === sel ? 'selected' : ''} ${p.activeChord === i ? 'active' : ''}`}
+                className={`chord-chip cat-${item.category.replace(/\s/g, '-')} ${i === sel ? 'selected' : ''} ${p.activeChord === i ? 'active' : ''} ${i < p.loopRange.from || i > p.loopRange.to ? 'out-of-range' : ''}`}
                 onClick={() => pick(i)}
                 title={item.note}
               >

@@ -98,8 +98,33 @@ export default function App() {
   const progEvents = (chords: ParsedChord[], beats: number) =>
     chords.map((c) => ({ midi: chordMidi(c, instrument, tuning), beats }))
 
-  const playProgression = () =>
-    toggle('prog', { chords: progEvents(prog.chords, st.beatsPerChord), loop: true, onChord: setActiveChord })
+  // part of the progression to play (indices, inclusive); clamped when chords are removed
+  const [range, setRange] = useState<{ from: number; to: number } | null>(null)
+  const last = Math.max(0, prog.chords.length - 1)
+  const loopRange = range && range.from <= last ? { from: range.from, to: Math.min(range.to, last) } : { from: 0, to: last }
+
+  const startProgression = (loop: boolean, r: { from: number; to: number }) => {
+    stopAll()
+    if (!prog.chords.length) return
+    setPlayingId('prog')
+    void play({
+      chords: progEvents(prog.chords.slice(r.from, r.to + 1), st.beatsPerChord),
+      loop,
+      bpm: st.bpm,
+      onChord: (i) => setActiveChord(r.from + i),
+      onEnd: stopAll,
+    })
+  }
+  const playProgression = () => (playingId === 'prog' ? stopAll() : startProgression(st.loop, loopRange))
+  const setLoop = (loop: boolean) => {
+    update({ loop })
+    if (playingId === 'prog') startProgression(loop, loopRange)
+  }
+  const changeRange = (r: { from: number; to: number }) => {
+    const fixed = { from: Math.min(r.from, r.to), to: Math.max(r.from, r.to) }
+    setRange(fixed.from === 0 && fixed.to === last ? null : fixed)
+    if (playingId === 'prog') startProgression(st.loop, fixed)
+  }
 
   const playMelody = () =>
     toggle('mel', {
@@ -292,6 +317,10 @@ export default function App() {
               onText={(t) => update({ progression: t })}
               onKey={(k) => update({ progressionKey: k })}
               onPlay={playProgression}
+              loop={st.loop}
+              loopRange={loopRange}
+              onLoop={setLoop}
+              onRange={changeRange}
               onUndo={() => undo('progression')}
               onPreview={previewChord}
             />

@@ -31,6 +31,8 @@ export interface AppState {
   /** "<tonicPc>:<mode>" for the key explorer */
   exploreKey: string
   withChords: boolean
+  /** repeat the progression while playing */
+  loop: boolean
   ideas: Idea[]
 }
 
@@ -48,6 +50,7 @@ export const DEFAULT_STATE: AppState = {
   melodyKey: 'auto',
   exploreKey: '4:aeolian',
   withChords: false,
+  loop: true,
   ideas: [],
 }
 
