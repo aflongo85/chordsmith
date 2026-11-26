@@ -13,7 +13,7 @@ export interface Idea {
   deleted?: boolean
 }
 
-export type Tab = 'progressione' | 'melodia' | 'idee'
+export type Tab = 'esplora' | 'progressione' | 'melodia' | 'idee'
 
 export interface AppState {
   tab: Tab
@@ -28,6 +28,8 @@ export interface AppState {
   /** "auto" or "<tonicPc>:<mode>" */
   progressionKey: string
   melodyKey: string
+  /** "<tonicPc>:<mode>" for the key explorer */
+  exploreKey: string
   withChords: boolean
   ideas: Idea[]
 }
@@ -44,6 +46,7 @@ export const DEFAULT_STATE: AppState = {
   crunch: false,
   progressionKey: 'auto',
   melodyKey: 'auto',
+  exploreKey: '4:aeolian',
   withChords: false,
   ideas: [],
 }

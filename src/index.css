@@ -813,3 +813,128 @@ textarea:focus {
     width: 100%;
   }
 }
+
+/* ------------------------------------------------------------ key explorer */
+.x-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.x-section h3 {
+  margin: 8px 0 0;
+}
+.x-section p {
+  margin: 0;
+}
+.x-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.x-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+}
+.x-chord {
+  display: flex;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--cat, var(--diatonic));
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.x-chord.selected {
+  background: var(--surface-2);
+  outline: 2px solid var(--cat, var(--diatonic));
+}
+.x-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.x-add {
+  width: 40px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.x-add:hover,
+.x-add:active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.x-star {
+  color: var(--secondary);
+  font-size: 0.8em;
+  margin-left: 4px;
+}
+.x-build,
+.x-selected {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.x-build-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.x-prog-chords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.x-pill {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cat, var(--border));
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+.x-pill.cat-diatonico {
+  --cat: var(--diatonic);
+}
+.x-pill small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.x-progs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.x-prog {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.x-more summary {
+  cursor: pointer;
+  color: var(--muted);
+  margin: 4px 0 8px;
+}

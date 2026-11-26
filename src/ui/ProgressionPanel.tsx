@@ -7,8 +7,6 @@ import { Fretboard } from './Fretboard'
 import { KeySelect } from './KeySelect'
 import { offsetLabel, scaleMarks, soundingChord, soundingKey, voicingMarks, voicingsFor } from './helpers'
 
-const EXAMPLES = ['Em C G D', 'D C G D', 'Am F C G', 'E G A C', 'C E F Fm', 'Dm Bb F C']
-
 interface Props {
   text: string
   errors: string[]
@@ -74,14 +72,6 @@ export function ProgressionPanel(p: Props) {
         <KeySelect value={p.keyChoice} candidates={a?.candidates ?? []} onChange={p.onKey} />
       </div>
       {p.errors.length > 0 && <p className="error">Non riconosco: {p.errors.join(', ')}</p>}
-      <div className="examples">
-        <span className="muted">Esempi:</span>
-        {EXAMPLES.map((e) => (
-          <button key={e} className="chip-btn" onClick={() => p.onText(e)}>
-            {e}
-          </button>
-        ))}
-      </div>
 
       {a && (
         <>

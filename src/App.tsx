@@ -2,6 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { parseProgression, type ParsedChord } from './core/chords'
 import { formatMelody, parseMelody } from './core/melody'
 import { analyzeMelody } from './core/melodyAnalysis'
+import { makeKey } from './core/key'
 import { midiToName, SHARP_NAMES } from './core/notes'
 import { analyzeProgression } from './core/progression'
 import { GENRES, getGenre } from './genres'
@@ -10,13 +11,15 @@ import { play, previewNotes, setCrunch, setTranspose, stop, warmUp, type PlayOpt
 import { collectSuggestions, type Suggestion, type SuggestionContext } from './suggest'
 import { usePersistentState, type Tab } from './state/store'
 import { useIdeaSync } from './sync/useIdeaSync'
-import { chordMidi, parseKeyChoice, symbolMidi, uid, voicingsFor } from './ui/helpers'
+import { chordMidi, keyValue, parseKeyChoice, symbolMidi, uid, voicingsFor } from './ui/helpers'
+import { ExplorePanel } from './ui/ExplorePanel'
 import { ProgressionPanel } from './ui/ProgressionPanel'
 import { MelodyPanel } from './ui/MelodyPanel'
 import { IdeasPanel } from './ui/IdeasPanel'
 import { SuggestionList } from './ui/SuggestionList'
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'esplora', label: 'Esplora tonalità' },
   { id: 'progressione', label: 'Progressione' },
   { id: 'melodia', label: 'Riff / Melodia' },
   { id: 'idee', label: 'Idee salvate' },
@@ -43,6 +46,7 @@ export default function App() {
     [mel, genre, st.melodyKey],
   )
   const melNames = melAnalysis?.key.names ?? SHARP_NAMES
+  const exploreKeyCtx = parseKeyChoice(st.exploreKey) ?? makeKey(4, 'aeolian')
 
   // ------------------------------------------------------------ suggestions
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -238,8 +242,41 @@ export default function App() {
         ))}
       </nav>
 
-      <main className={st.tab === 'idee' ? 'layout single' : 'layout'}>
+      <main className={st.tab === 'idee' || st.tab === 'esplora' ? 'layout single' : 'layout'}>
         <section className="main-col">
+          {st.tab === 'esplora' && (
+            <ExplorePanel
+              exploreKey={exploreKeyCtx}
+              progressionKey={progAnalysis?.key ?? null}
+              genre={genre}
+              instrument={instrument}
+              tuning={tuning}
+              progression={prog.chords}
+              playingId={playingId}
+              canUndo={history.progression.length > 0}
+              onKey={(k) => update({ exploreKey: k })}
+              onPreview={(c) => previewChord(c, 0)}
+              onAdd={(sym) => replace('progression', `${st.progression.trim()} ${sym}`.trim())}
+              onListen={(id, symbols) =>
+                toggle(id, { chords: symbols.map((sym) => ({ midi: symbolMidi(sym, instrument, tuning), beats: Math.min(st.beatsPerChord, 2) })) })
+              }
+              onUse={(symbols) => {
+                stopAll()
+                replace('progression', symbols.join(' '), 'Progressione sostituita: Annulla per tornare indietro')
+                update({ progressionKey: keyValue(exploreKeyCtx) })
+              }}
+              onPlayProgression={playProgression}
+              onUndo={() => undo('progression')}
+              onClear={() => {
+                stopAll()
+                replace('progression', '', 'Progressione svuotata')
+              }}
+              onOpen={() => {
+                stopAll()
+                update({ tab: 'progressione', progressionKey: keyValue(exploreKeyCtx) })
+              }}
+            />
+          )}
           {st.tab === 'progressione' && (
             <ProgressionPanel
               text={st.progression}
@@ -306,7 +343,7 @@ export default function App() {
             />
           )}
         </section>
-        {st.tab !== 'idee' && (
+        {st.tab !== 'idee' && st.tab !== 'esplora' && (
           <aside className="side-col">
             <h2>Idee per sviluppare</h2>
             <SuggestionList
