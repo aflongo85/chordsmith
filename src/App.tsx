@@ -6,7 +6,7 @@ import { midiToName, SHARP_NAMES } from './core/notes'
 import { analyzeProgression } from './core/progression'
 import { GENRES, getGenre } from './genres'
 import { INSTRUMENTS, getInstrument, getTuning } from './instruments'
-import { play, previewNotes, setCrunch, setTranspose, stop, type PlayOptions } from './audio/player'
+import { play, previewNotes, setCrunch, setTranspose, stop, warmUp, type PlayOptions } from './audio/player'
 import { collectSuggestions, type Suggestion, type SuggestionContext } from './suggest'
 import { usePersistentState, type Tab } from './state/store'
 import { chordMidi, parseKeyChoice, symbolMidi, uid, voicingsFor } from './ui/helpers'
@@ -74,6 +74,11 @@ export default function App() {
     setActiveNote(null)
   }
   useEffect(() => stop, [])
+  // prepare the guitar sound in the background so the first ▶ is instant
+  useEffect(() => {
+    const t = setTimeout(() => void warmUp(), 1200)
+    return () => clearTimeout(t)
+  }, [])
   useEffect(() => setCrunch(st.crunch), [st.crunch])
   useEffect(() => setTranspose(tuning.offset), [tuning.offset])
 

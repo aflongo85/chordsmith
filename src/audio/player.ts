@@ -10,54 +10,92 @@ type ToneLib = typeof ToneNS
 
 interface Engine {
   Tone: ToneLib
-  guitar: ToneNS.PolySynth<ToneNS.MonoSynth>
+  guitar: ToneNS.Sampler
   crunch: ToneNS.Distortion
+  room: ToneNS.FeedbackDelay
 }
 
+let enginePromise: Promise<Engine> | null = null
 let engine: Engine | null = null
 let crunchOn = false
 /** semitones added to every note at playback (transposed tunings, e.g. -1 for Eb) */
 let transpose = 0
 
+/** One rendered sample every few semitones; the sampler repitches in between. */
+const SAMPLE_NOTES = [40, 45, 50, 55, 59, 64, 69, 74]
+const SAMPLE_SECONDS = 3.2
+
+const isTouchDevice = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+
 /**
- * Clean electric-guitar-like voice: a bright picked attack (the filter opens and settles)
- * that keeps ringing at a lower level until the note is released, like a fretted string.
- * Kept light on purpose (one oscillator, 12 dB filter) so phones don't drop out.
+ * Renders the clean-guitar tone (bright picked attack settling into a warm ring) once,
+ * offline, into a handful of audio buffers. Playing them back costs almost nothing, so
+ * phones don't crackle — real-time synthesis of every note was too heavy for them.
  */
-async function ensure(): Promise<Engine> {
-  if (engine) {
-    await engine.Tone.start()
-    return engine
+async function renderSamples(Tone: ToneLib): Promise<Record<string, ToneNS.ToneAudioBuffer>> {
+  const urls: Record<string, ToneNS.ToneAudioBuffer> = {}
+  for (const midi of SAMPLE_NOTES) {
+    const freq = Tone.Frequency(midi, 'midi')
+    urls[freq.toNote()] = await Tone.Offline(() => {
+      const body = new Tone.Filter({ frequency: 140, type: 'highpass', rolloff: -12 }).toDestination()
+      const tone = new Tone.Filter({ frequency: 4200, type: 'lowpass', rolloff: -12 }).connect(body)
+      const voice = new Tone.MonoSynth({
+        oscillator: { type: 'sawtooth' },
+        envelope: { attack: 0.004, decay: 1.2, sustain: 0.3, release: 0.4 },
+        filter: { type: 'lowpass', Q: 0.7, rolloff: -12 },
+        filterEnvelope: { attack: 0.002, decay: 0.5, sustain: 0.35, release: 0.4, baseFrequency: 320, octaves: 3, exponent: 2 },
+      }).connect(tone)
+      voice.triggerAttackRelease(freq.toFrequency(), SAMPLE_SECONDS - 0.5, 0.002, 0.9)
+    }, SAMPLE_SECONDS, 1)
   }
+  return urls
+}
+
+async function load(): Promise<Engine> {
   const Tone = await import('tone')
-  // bigger audio buffers: fewer glitches on phones, slightly more latency (not noticeable here)
-  Tone.setContext(new Tone.Context({ latencyHint: 'balanced', lookAhead: 0.15 }))
-  await Tone.start()
-  const guitar = new Tone.PolySynth(Tone.MonoSynth, {
-    oscillator: { type: 'sawtooth' },
-    envelope: { attack: 0.004, decay: 1.2, sustain: 0.3, release: 1.1 },
-    filter: { type: 'lowpass', Q: 0.7, rolloff: -12 },
-    filterEnvelope: { attack: 0.002, decay: 0.5, sustain: 0.35, release: 1, baseFrequency: 320, octaves: 3, exponent: 2 },
-  })
-  guitar.maxPolyphony = 32
-  guitar.volume.value = -6
-  const crunch = new Tone.Distortion({ distortion: 0.5, wet: crunchOn ? 0.55 : 0 })
-  const tone = new Tone.Filter({ frequency: 4000, type: 'lowpass', rolloff: -12 })
-  const body = new Tone.Filter({ frequency: 150, type: 'highpass', rolloff: -12 })
-  const chorus = new Tone.Chorus({ frequency: 1.2, delayTime: 3.5, depth: 0.35, wet: 0.3 }).start()
-  const comp = new Tone.Compressor(-18, 3)
-  const reverb = new Tone.Reverb({ decay: 1.4, preDelay: 0.01, wet: 0.18 })
+  // phones get bigger audio buffers: a little more latency, no dropouts
+  Tone.setContext(new Tone.Context({ latencyHint: isTouchDevice() ? 'playback' : 'interactive', lookAhead: 0.15 }))
+  const urls = await renderSamples(Tone)
+  const guitar = new Tone.Sampler({ urls, release: 0.6, volume: -4 })
+  const crunch = new Tone.Distortion({ distortion: 0.5, oversample: 'none' })
+  const room = new Tone.FeedbackDelay({ delayTime: 0.085, feedback: 0.22, wet: 0.14 })
   const limiter = new Tone.Limiter(-1)
-  guitar.chain(crunch, body, tone, chorus, comp, reverb, limiter, Tone.getDestination())
-  engine = { Tone, guitar, crunch }
-  return engine
+  room.chain(limiter, Tone.getDestination())
+  const e: Engine = { Tone, guitar, crunch, room }
+  route(e)
+  engine = e
+  return e
+}
+
+/** The distortion is only in the signal path while it's switched on (no idle cost). */
+function route(e: Engine) {
+  e.guitar.disconnect()
+  e.crunch.disconnect()
+  if (crunchOn) {
+    e.guitar.connect(e.crunch)
+    e.crunch.connect(e.room)
+  } else {
+    e.guitar.connect(e.room)
+  }
+}
+
+/** Loads Tone.js and renders the samples ahead of time (no user gesture needed). */
+export function warmUp(): Promise<Engine> {
+  enginePromise ??= load()
+  return enginePromise
+}
+
+async function ensure(): Promise<Engine> {
+  const e = await warmUp()
+  await e.Tone.start()
+  return e
 }
 
 function pluck(e: Engine, midi: number, time: number, seconds: number, velocity = 0.8) {
   // tiny random variation so repeated strums don't sound mechanical
   const v = Math.min(1, Math.max(0.2, velocity + (Math.random() - 0.5) * 0.1))
-  const hold = Math.min(Math.max(seconds, 0.15), 4)
-  e.guitar.triggerAttackRelease(e.Tone.Frequency(midi + transpose, 'midi').toFrequency(), hold, time, v)
+  const hold = Math.min(Math.max(seconds, 0.15), SAMPLE_SECONDS)
+  e.guitar.triggerAttackRelease(e.Tone.Frequency(midi + transpose, 'midi').toNote(), hold, time, v)
 }
 
 function strum(e: Engine, midi: number[], time: number, seconds: number, down = true) {
@@ -71,7 +109,7 @@ export function setTranspose(semitones: number) {
 
 export function setCrunch(on: boolean) {
   crunchOn = on
-  if (engine) engine.crunch.wet.value = on ? 0.55 : 0
+  if (engine) route(engine)
 }
 
 export async function previewNotes(midi: number[]) {
