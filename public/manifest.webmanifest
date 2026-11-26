@@ -1,0 +1,14 @@
+{
+  "name": "Chordsmith – composizione musicale",
+  "short_name": "Chordsmith",
+  "description": "Analizza progressioni di accordi e riff e suggerisce come svilupparli.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#141312",
+  "theme_color": "#d1462f",
+  "lang": "it",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
