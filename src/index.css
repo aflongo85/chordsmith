@@ -437,6 +437,16 @@ textarea:focus {
   font-weight: 700;
 }
 
+.chord-sounding {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sounding {
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .chord-func {
   font-size: 0.72rem;
   color: var(--muted);

@@ -21,7 +21,8 @@ function accidentalCount(notes: string[]): number {
 /** Best spelling (fewest accidentals) of a scale built on pc. */
 export function spellScale(tonicPc: number, scale: ScaleId): { tonic: string; notes: string[] } {
   const def = SCALES[scale]
-  const options = [...new Set([SHARP_NAMES[tonicPc], FLAT_NAMES[tonicPc]])].map((tonic) => ({
+  // flats first: on a tie (Eb minor vs D# minor) the flat spelling is the usual one
+  const options = [...new Set([FLAT_NAMES[tonicPc], SHARP_NAMES[tonicPc]])].map((tonic) => ({
     tonic,
     notes: Scale.get(`${tonic} ${def.tonalName}`).notes,
   }))

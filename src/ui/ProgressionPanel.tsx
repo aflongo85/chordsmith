@@ -5,7 +5,7 @@ import type { ProgressionAnalysis } from '../core/progression'
 import type { Instrument, Tuning } from '../instruments/types'
 import { Fretboard } from './Fretboard'
 import { KeySelect } from './KeySelect'
-import { scaleMarks, voicingMarks, voicingsFor } from './helpers'
+import { offsetLabel, scaleMarks, soundingChord, soundingKey, voicingMarks, voicingsFor } from './helpers'
 
 const EXAMPLES = ['Em C G D', 'D C G D', 'Am F C G', 'E G A C', 'C E F Fm', 'Dm Bb F C']
 
@@ -94,6 +94,9 @@ export function ProgressionPanel(p: Props) {
             </button>
             <span className="key-label">
               {a.key.label}
+              {p.tuning.offset !== 0 && (
+                <span className="sounding"> · suona in {soundingKey(a.key, p.tuning.offset).label}</span>
+              )}
             </span>
           </div>
 
@@ -108,6 +111,9 @@ export function ProgressionPanel(p: Props) {
                 <span className="chord-symbol">{P(item.chord.symbol)}</span>
                 <span className="chord-roman">{P(item.roman)}</span>
                 <span className="chord-func">{item.func}</span>
+                {p.tuning.offset !== 0 && (
+                  <span className="chord-sounding">suona {P(soundingChord(item.chord, a.key, p.tuning.offset))}</span>
+                )}
               </button>
             ))}
           </div>
@@ -115,6 +121,12 @@ export function ProgressionPanel(p: Props) {
           <div className="board-head">
             <div>
               <strong>{chord ? P(chord.symbol) : ''}</strong>
+              {chord && p.tuning.offset !== 0 && (
+                <span className="muted">
+                  {' '}
+                  (suona {P(soundingChord(chord, a.key, p.tuning.offset))}, {offsetLabel(p.tuning.offset)} con le stesse posizioni)
+                </span>
+              )}
               {voicings.length > 0 && (
                 <span className="muted">
                   {' '}

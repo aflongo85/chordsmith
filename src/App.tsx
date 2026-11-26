@@ -6,7 +6,7 @@ import { midiToName, SHARP_NAMES } from './core/notes'
 import { analyzeProgression } from './core/progression'
 import { GENRES, getGenre } from './genres'
 import { INSTRUMENTS, getInstrument, getTuning } from './instruments'
-import { play, previewNotes, setCrunch, stop, type PlayOptions } from './audio/player'
+import { play, previewNotes, setCrunch, setTranspose, stop, type PlayOptions } from './audio/player'
 import { collectSuggestions, type Suggestion, type SuggestionContext } from './suggest'
 import { usePersistentState, type Tab } from './state/store'
 import { chordMidi, parseKeyChoice, symbolMidi, uid, voicingsFor } from './ui/helpers'
@@ -75,6 +75,7 @@ export default function App() {
   }
   useEffect(() => stop, [])
   useEffect(() => setCrunch(st.crunch), [st.crunch])
+  useEffect(() => setTranspose(tuning.offset), [tuning.offset])
 
   const toggle = (id: string, opts: Omit<PlayOptions, 'bpm' | 'onEnd'>) => {
     if (playingId === id) return stopAll()

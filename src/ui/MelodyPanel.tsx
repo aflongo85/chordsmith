@@ -5,7 +5,7 @@ import { midiToName, prettyAccidentals as P, SHARP_NAMES } from '../core/notes'
 import type { Instrument, Position, Tuning } from '../instruments/types'
 import { Fretboard, type Mark } from './Fretboard'
 import { KeySelect } from './KeySelect'
-import { scaleMarks } from './helpers'
+import { offsetLabel, scaleMarks, soundingKey } from './helpers'
 
 const EXAMPLES: { label: string; text: string }[] = [
   { label: 'Riff blues in Mi', text: 'E2/8 G2/8 A2/4 E2/8 G2/8 Bb2/8 A2/4 E2/8 G2/8 A2/4 G2/8 E2/2' },
@@ -115,7 +115,15 @@ export function MelodyPanel(p: Props) {
       </div>
 
       <div className="board-head">
-        <strong>{a ? a.key.label : 'Tastiera'}</strong>
+        <strong>
+          {a ? a.key.label : 'Tastiera'}
+          {a && p.tuning.offset !== 0 && (
+            <span className="muted sounding">
+              {' '}
+              · suona in {soundingKey(a.key, p.tuning.offset).label} ({offsetLabel(p.tuning.offset)}, stesse posizioni)
+            </span>
+          )}
+        </strong>
         <label className="check">
           <input type="checkbox" checked={showScale} onChange={(e) => setShowScale(e.target.checked)} /> scala
         </label>

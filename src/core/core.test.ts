@@ -86,6 +86,13 @@ describe('guitar voicings', () => {
     expect(v[0].midi.length).toBeLessThanOrEqual(3)
     expect(v[0].midi[0] % 12).toBe(9)
   })
+  it('transposed tunings keep the standard shapes', () => {
+    const eb = guitar.tunings.find((t) => t.id === 'eb')!
+    expect(eb.offset).toBe(-1)
+    const em = parseChord('Em')!
+    expect(guitar.voicings(em, eb)[0].frets).toEqual(guitar.voicings(em, std)[0].frets)
+    expect(guitar.parseToken('6:0', eb)).toBe(40)
+  })
   it('bass plays single roots', () => {
     const v = bass.voicings(parseChord('G')!, bass.tunings[0])
     expect(v[0].midi).toHaveLength(1)

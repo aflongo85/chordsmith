@@ -1,7 +1,11 @@
 import { StringedInstrument } from './stringed'
 import type { Instrument, Tuning } from './types'
 
-const t = (id: string, name: string, strings: number[]): Tuning => ({ id, name, strings })
+const t = (id: string, name: string, strings: number[], offset = 0): Tuning => ({ id, name, strings, offset })
+
+const GUITAR_STANDARD = [40, 45, 50, 55, 59, 64]
+const GUITAR_DROP_D = [38, 45, 50, 55, 59, 64]
+const BASS_STANDARD = [28, 33, 38, 43]
 
 export const guitar = new StringedInstrument({
   id: 'guitar',
@@ -10,10 +14,13 @@ export const guitar = new StringedInstrument({
   frets: 15,
   defaultOctave: 3,
   tunings: [
-    t('standard', 'Standard (E A D G B E)', [40, 45, 50, 55, 59, 64]),
-    t('drop-d', 'Drop D (D A D G B E)', [38, 45, 50, 55, 59, 64]),
-    t('eb', 'Mezzo tono sotto (Eb)', [39, 44, 49, 54, 58, 63]),
-    t('drop-c', 'Drop C (C G C F A D)', [36, 43, 48, 53, 57, 62]),
+    t('standard', 'Standard (E A D G B E)', GUITAR_STANDARD),
+    t('drop-d', 'Drop D (D A D G B E)', GUITAR_DROP_D),
+    // transposed tunings: same shapes as the reference tuning, sounding lower
+    t('eb', 'Mezzo tono sotto (forme standard)', GUITAR_STANDARD, -1),
+    t('d-std', 'Un tono sotto (forme standard)', GUITAR_STANDARD, -2),
+    t('drop-c#', 'Drop C# (forme Drop D)', GUITAR_DROP_D, -1),
+    t('drop-c', 'Drop C (forme Drop D)', GUITAR_DROP_D, -2),
     t('dadgad', 'DADGAD', [38, 45, 50, 55, 57, 62]),
     t('open-d', 'Open D (D A D F# A D)', [38, 45, 50, 54, 57, 62]),
   ],
@@ -26,8 +33,10 @@ export const bass = new StringedInstrument({
   frets: 15,
   defaultOctave: 2,
   tunings: [
-    t('standard', 'Standard (E A D G)', [28, 33, 38, 43]),
+    t('standard', 'Standard (E A D G)', BASS_STANDARD),
     t('drop-d', 'Drop D (D A D G)', [26, 33, 38, 43]),
+    t('eb', 'Mezzo tono sotto (forme standard)', BASS_STANDARD, -1),
+    t('d-std', 'Un tono sotto (forme standard)', BASS_STANDARD, -2),
   ],
 })
 

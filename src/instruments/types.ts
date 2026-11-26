@@ -3,8 +3,17 @@ import type { ParsedChord } from '../core/chords'
 export interface Tuning {
   id: string
   name: string
-  /** MIDI note of each open string, lowest string first */
+  /**
+   * MIDI note of each open string, lowest string first, as the player *thinks* it.
+   * Fingerings, note names and analysis all use these values.
+   */
   strings: number[]
+  /**
+   * Semitones between what is fingered and what actually sounds. A guitar tuned down
+   * a half step is "standard" with offset -1: an E minor shape is fingered and named Em,
+   * but sounds as Ebm. Only playback applies it. 0 for tunings that change the shapes.
+   */
+  offset: number
 }
 
 export interface Voicing {

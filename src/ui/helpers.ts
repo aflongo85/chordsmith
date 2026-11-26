@@ -1,4 +1,4 @@
-import { parseChord, type ParsedChord } from '../core/chords'
+import { parseChord, transposeChord, type ParsedChord } from '../core/chords'
 import { makeKey, type KeyCandidate, type KeyContext } from '../core/key'
 import { mod12 } from '../core/notes'
 import { MODE_IDS, SCALES, type ModeId } from '../core/scales'
@@ -78,3 +78,19 @@ export function keyOptions(candidates: KeyCandidate[]): { suggested: KeyOption[]
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 10)
+
+/** For transposed tunings: the key that actually sounds. */
+export function soundingKey(key: KeyContext, offset: number): KeyContext {
+  return makeKey(key.tonicPc + offset, key.mode)
+}
+
+/** For transposed tunings: the chord that actually sounds (Em shape in Eb tuning → Ebm). */
+export function soundingChord(chord: ParsedChord, key: KeyContext, offset: number): string {
+  return transposeChord(chord, offset, soundingKey(key, offset))
+}
+
+export function offsetLabel(offset: number): string {
+  if (offset === -1) return 'mezzo tono sotto'
+  if (offset === -2) return 'un tono sotto'
+  return `${offset > 0 ? '+' : ''}${offset} semitoni`
+}
