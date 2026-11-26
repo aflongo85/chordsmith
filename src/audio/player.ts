@@ -20,9 +20,9 @@ let crunchOn = false
 let transpose = 0
 
 /**
- * Clean electric-guitar-like voice: a bright, plucked attack (filter envelope opening and
- * closing fast) that decays to a round, warm tone, with no sustain — like a picked string.
- * Chorus and a short room reverb add the "clean channel" shimmer.
+ * Clean electric-guitar-like voice: a bright picked attack (the filter opens and settles)
+ * that keeps ringing at a lower level until the note is released, like a fretted string.
+ * Kept light on purpose (one oscillator, 12 dB filter) so phones don't drop out.
  */
 async function ensure(): Promise<Engine> {
   if (engine) {
@@ -30,22 +30,25 @@ async function ensure(): Promise<Engine> {
     return engine
   }
   const Tone = await import('tone')
+  // bigger audio buffers: fewer glitches on phones, slightly more latency (not noticeable here)
+  Tone.setContext(new Tone.Context({ latencyHint: 'balanced', lookAhead: 0.15 }))
   await Tone.start()
   const guitar = new Tone.PolySynth(Tone.MonoSynth, {
-    oscillator: { type: 'fatsawtooth', count: 2, spread: 8 },
-    envelope: { attack: 0.003, decay: 1.8, sustain: 0, release: 0.5 },
-    filter: { type: 'lowpass', Q: 0.8, rolloff: -24 },
-    filterEnvelope: { attack: 0.002, decay: 0.35, sustain: 0.25, release: 0.6, baseFrequency: 260, octaves: 3.4, exponent: 2 },
+    oscillator: { type: 'sawtooth' },
+    envelope: { attack: 0.004, decay: 1.2, sustain: 0.3, release: 1.1 },
+    filter: { type: 'lowpass', Q: 0.7, rolloff: -12 },
+    filterEnvelope: { attack: 0.002, decay: 0.5, sustain: 0.35, release: 1, baseFrequency: 320, octaves: 3, exponent: 2 },
   })
   guitar.maxPolyphony = 32
-  guitar.volume.value = -16
+  guitar.volume.value = -6
   const crunch = new Tone.Distortion({ distortion: 0.5, wet: crunchOn ? 0.55 : 0 })
-  const tone = new Tone.Filter({ frequency: 4200, type: 'lowpass', rolloff: -12 })
-  const body = new Tone.Filter({ frequency: 180, type: 'highpass' })
-  const chorus = new Tone.Chorus({ frequency: 1.2, delayTime: 3.5, depth: 0.35, wet: 0.35 }).start()
-  const comp = new Tone.Compressor(-20, 3)
-  const reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.01, wet: 0.2 })
-  guitar.chain(crunch, body, tone, chorus, comp, reverb, Tone.getDestination())
+  const tone = new Tone.Filter({ frequency: 4000, type: 'lowpass', rolloff: -12 })
+  const body = new Tone.Filter({ frequency: 150, type: 'highpass', rolloff: -12 })
+  const chorus = new Tone.Chorus({ frequency: 1.2, delayTime: 3.5, depth: 0.35, wet: 0.3 }).start()
+  const comp = new Tone.Compressor(-18, 3)
+  const reverb = new Tone.Reverb({ decay: 1.4, preDelay: 0.01, wet: 0.18 })
+  const limiter = new Tone.Limiter(-1)
+  guitar.chain(crunch, body, tone, chorus, comp, reverb, limiter, Tone.getDestination())
   engine = { Tone, guitar, crunch }
   return engine
 }
@@ -53,7 +56,8 @@ async function ensure(): Promise<Engine> {
 function pluck(e: Engine, midi: number, time: number, seconds: number, velocity = 0.8) {
   // tiny random variation so repeated strums don't sound mechanical
   const v = Math.min(1, Math.max(0.2, velocity + (Math.random() - 0.5) * 0.1))
-  e.guitar.triggerAttackRelease(e.Tone.Frequency(midi + transpose, 'midi').toFrequency(), Math.min(seconds, 2.5), time, v)
+  const hold = Math.min(Math.max(seconds, 0.15), 4)
+  e.guitar.triggerAttackRelease(e.Tone.Frequency(midi + transpose, 'midi').toFrequency(), hold, time, v)
 }
 
 function strum(e: Engine, midi: number[], time: number, seconds: number, down = true) {
@@ -72,7 +76,7 @@ export function setCrunch(on: boolean) {
 
 export async function previewNotes(midi: number[]) {
   const e = await ensure()
-  strum(e, midi, e.Tone.now() + 0.01, 1.5)
+  strum(e, midi, e.Tone.now() + 0.01, 2.2)
 }
 
 export function stop() {
@@ -110,9 +114,9 @@ export async function play(opts: PlayOptions) {
     }, start * spb)
     // strum on each beat, alternating down/up on the off-beats for a rock feel
     for (let b = 0; b < c.beats; b += 1) {
-      tr.schedule((time) => strum(e, c.midi, time, spb * 1.2, true), (start + b) * spb)
+      tr.schedule((time) => strum(e, c.midi, time, spb * 0.95, true), (start + b) * spb)
       if (opts.melody === undefined && c.beats >= 2 && b % 2 === 1)
-        tr.schedule((time) => strum(e, c.midi.slice(-3), time, spb * 0.5, false), (start + b + 0.5) * spb)
+        tr.schedule((time) => strum(e, c.midi.slice(-3), time, spb * 0.45, false), (start + b + 0.5) * spb)
     }
     chordBeats += c.beats
   })
