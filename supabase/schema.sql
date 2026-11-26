@@ -17,6 +17,10 @@ create table if not exists public.ideas (
 
 alter table public.ideas enable row level security;
 
+-- solo gli utenti autenticati possono usare la tabella (sempre filtrati dalle regole sotto)
+revoke all on public.ideas from anon;
+grant select, insert, update, delete on public.ideas to authenticated;
+
 drop policy if exists "ideas: leggo le mie" on public.ideas;
 drop policy if exists "ideas: creo le mie" on public.ideas;
 drop policy if exists "ideas: modifico le mie" on public.ideas;

@@ -64,7 +64,7 @@ export function SyncBox({ sync }: { sync: SyncApi }) {
       <div>
         <strong>☁ Sincronizza le idee tra i dispositivi</strong>
         <div className="muted small">
-          Accedi con la stessa email sul telefono e sul Mac. Niente password: ricevi un'email con un link e un codice.
+          Accedi con la stessa email sul telefono e sul Mac. Niente password: ricevi un'email con un link per accedere.
         </div>
       </div>
       {!sent ? (
@@ -87,33 +87,36 @@ export function SyncBox({ sync }: { sync: SyncApi }) {
           </button>
         </form>
       ) : (
-        <form
-          className="editor-row"
-          onSubmit={(e) => {
-            e.preventDefault()
-            void run(() => sync.verify(email.trim(), code.trim()))
-          }}
-        >
-          <label className="field grow">
-            <span>Codice ricevuto via email</span>
-            <input
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="123456"
-            />
-          </label>
-          <button className="btn primary align-end" disabled={busy || code.length < 6}>
-            Accedi
-          </button>
-          <button type="button" className="btn align-end" onClick={() => setSent(false)}>
-            Cambia email
-          </button>
-          <p className="muted small full">
-            Oppure tocca il link nell'email: si apre l'app già collegata. Se non arriva, controlla lo spam.
+        <div className="sync-sent">
+          <p className="full">
+            Ti ho mandato un'email a <strong>{email}</strong>: tocca <strong>«Sign in»</strong> e l'app si apre già collegata. Va bene anche
+            aprirla su un altro dispositivo: verrà collegato quello. Se non arriva, controlla lo spam.
           </p>
-        </form>
+          <form
+            className="editor-row"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void run(() => sync.verify(email.trim(), code.trim()))
+            }}
+          >
+            <label className="field grow">
+              <span>Hai ricevuto un codice a 6 cifre? (facoltativo)</span>
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+              />
+            </label>
+            <button className="btn align-end" disabled={busy || code.length < 6}>
+              Accedi col codice
+            </button>
+            <button type="button" className="btn align-end" onClick={() => setSent(false)}>
+              Cambia email
+            </button>
+          </form>
+        </div>
       )}
       {err && <p className="error">{err}</p>}
     </div>
